@@ -1,0 +1,11 @@
+#spring:
+#  application.name: poc-multitenant-per-database-and-schema
+#
+#  datasource:
+#    username: central
+#    password: central
+#    hikari.pool-name: central
+#    type: com.zaxxer.hikari.HikariDataSource
+#    driver-class-name: org.postgresql.Driver
+#    hikari.maximum-pool-size: 10
+#    url: jdbc:postgresql://localhost:5432/central
