@@ -1,10 +1,9 @@
 package com.emanuelvictor.erp.infrastructure.multitenant;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.Tenant;
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantsService;
+import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantTable;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.stereotype.Component;
 
@@ -13,18 +12,20 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.getCentralTenant;
+
 @Component
-public class ConnectionProvider implements MultiTenantConnectionProvider<Tenant>, HibernatePropertiesCustomizer {
+@RequiredArgsConstructor
+public class ConnectionProvider implements MultiTenantConnectionProvider<TenantTable>, HibernatePropertiesCustomizer {
 
-    @Autowired
-    DataSource dataSource;
+    private final DataSource dataSource;
 
-    @Autowired
-    TenantsService tenantsService;
+//    @Autowired
+//    TenantsService tenantsService;
 
     @Override
     public Connection getAnyConnection() throws SQLException {
-        return getConnection(tenantsService.getDefaultTenant());
+        return getConnection(getCentralTenant());
     }
 
     @Override
@@ -33,16 +34,16 @@ public class ConnectionProvider implements MultiTenantConnectionProvider<Tenant>
     }
 
     @Override
-    public Connection getConnection(Tenant tenant) throws SQLException {
+    public Connection getConnection(TenantTable tenantTable) throws SQLException {
         Connection connection = dataSource.getConnection();
-        connection.setSchema(tenant.schema());
+        connection.setSchema(tenantTable.getSchema());
         return connection;
     }
 
     @Override
-    public void releaseConnection(Tenant tenant, Connection connection) throws SQLException {
+    public void releaseConnection(TenantTable tenantTable, Connection connection) throws SQLException {
 //        connection.setSchema("public"); // TODO ??
-        connection.setSchema(tenant.schema());
+        connection.setSchema(tenantTable.getSchema());
         connection.close();
     }
 

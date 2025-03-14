@@ -1,6 +1,7 @@
 package com.emanuelvictor.erp.infrastructure.multitenant;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.Tenant;
+import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantTable;
+import lombok.Setter;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
@@ -8,18 +9,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.getCentralTenant;
+
+@Setter
 @Component
-class TenantIdentifierResolver implements CurrentTenantIdentifierResolver<Tenant>, HibernatePropertiesCustomizer {
+public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver<TenantTable>, HibernatePropertiesCustomizer {
 
-    private Tenant currentTenant;
-
-    public void setCurrentTenant(Tenant tenant) {
-        currentTenant = tenant;
-    }
+    private TenantTable currentTenantTable;
 
     @Override
-    public Tenant resolveCurrentTenantIdentifier() {
-        return currentTenant;
+    public TenantTable resolveCurrentTenantIdentifier() {
+        return currentTenantTable == null ? getCentralTenant() : currentTenantTable;
     }
 
     @Override
@@ -36,8 +36,8 @@ class TenantIdentifierResolver implements CurrentTenantIdentifierResolver<Tenant
     }
 
     @Override
-    public boolean isRoot(Tenant tenant) {
-        assert tenant != null;
-        return tenant.isCentral();
+    public boolean isRoot(TenantTable tenantTable) {
+        assert tenantTable != null;
+        return tenantTable.isCentral();
     }
 }
