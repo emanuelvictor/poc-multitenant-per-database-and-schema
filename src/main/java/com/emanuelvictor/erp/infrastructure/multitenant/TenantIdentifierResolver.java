@@ -1,6 +1,5 @@
 package com.emanuelvictor.erp.infrastructure.multitenant;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantTable;
 import lombok.Setter;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
@@ -9,17 +8,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.getCentralTenant;
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.CENTRAL_DATA_SOURCE;
 
 @Setter
 @Component
-public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver<TenantTable>, HibernatePropertiesCustomizer {
+public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver<String>, HibernatePropertiesCustomizer {
 
-    private TenantTable currentTenantTable;
+    private String tenant;
 
     @Override
-    public TenantTable resolveCurrentTenantIdentifier() {
-        return currentTenantTable == null ? getCentralTenant() : currentTenantTable;
+    public String resolveCurrentTenantIdentifier() {
+        return tenant == null ? CENTRAL_DATA_SOURCE.getSchema() : tenant;
     }
 
     @Override
@@ -36,8 +35,8 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
     }
 
     @Override
-    public boolean isRoot(TenantTable tenantTable) {
-        assert tenantTable != null;
-        return tenantTable.isCentral();
+    public boolean isRoot(String tenant) {
+        assert tenant != null;
+        return tenant.equals(CENTRAL_DATA_SOURCE.getSchema());
     }
 }

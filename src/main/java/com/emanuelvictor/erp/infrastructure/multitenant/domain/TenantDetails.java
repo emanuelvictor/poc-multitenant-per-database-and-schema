@@ -1,5 +1,7 @@
 package com.emanuelvictor.erp.infrastructure.multitenant.domain;
 
+import javax.sql.DataSource;
+
 public interface TenantDetails {
 
     String getSchema();
@@ -7,4 +9,8 @@ public interface TenantDetails {
     String getDatabase();
 
     String getAddress();
+
+    boolean isCentral();
+
+    DataSource getDataSource();
 }

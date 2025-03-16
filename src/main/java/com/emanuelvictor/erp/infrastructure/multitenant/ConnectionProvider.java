@@ -1,31 +1,27 @@
 package com.emanuelvictor.erp.infrastructure.multitenant;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantTable;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.getCentralTenant;
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.CENTRAL_DATA_SOURCE;
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.getAllCostumerTenants;
 
 @Component
 @RequiredArgsConstructor
-public class ConnectionProvider implements MultiTenantConnectionProvider<TenantTable>, HibernatePropertiesCustomizer {
+public class ConnectionProvider implements MultiTenantConnectionProvider<String>, HibernatePropertiesCustomizer {
 
-    private final DataSource dataSource;
-
-//    @Autowired
-//    TenantsService tenantsService;
+//    private final DataSource dataSource;
 
     @Override
-    public Connection getAnyConnection() throws SQLException {
-        return getConnection(getCentralTenant());
+    public Connection getAnyConnection() throws SQLException { // TODO sei lá
+        return CENTRAL_DATA_SOURCE.getDataSource().getConnection();
     }
 
     @Override
@@ -34,16 +30,22 @@ public class ConnectionProvider implements MultiTenantConnectionProvider<TenantT
     }
 
     @Override
-    public Connection getConnection(TenantTable tenantTable) throws SQLException {
-        Connection connection = dataSource.getConnection();
-        connection.setSchema(tenantTable.getSchema());
+    public Connection getConnection(String schema) throws SQLException {
+        if (CENTRAL_DATA_SOURCE.getSchema().equals(schema))
+            return CENTRAL_DATA_SOURCE.getDataSource().getConnection();
+
+        final Connection connection = getAllCostumerTenants().stream()
+                .filter(tenant -> tenant.getSchema().equals(schema.toLowerCase()))
+                .findFirst().orElseThrow(() -> new RuntimeException("Tenant not found. Verify if it is added in RouteDataSource of TenantMigrationService"))
+                .getDataSource().getConnection();
+        connection.setSchema(schema);
         return connection;
     }
 
     @Override
-    public void releaseConnection(TenantTable tenantTable, Connection connection) throws SQLException {
+    public void releaseConnection(String schema, Connection connection) throws SQLException {
 //        connection.setSchema("public"); // TODO ??
-        connection.setSchema(tenantTable.getSchema());
+        connection.setSchema(schema);
         connection.close();
     }
 
