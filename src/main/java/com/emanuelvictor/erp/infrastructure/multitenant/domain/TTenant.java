@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.sql.DataSource;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.CENTRAL_DATA_SOURCE;
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.CENTRAL_DATA_SOURCE;
 
 @Getter
 @Entity
@@ -37,7 +37,7 @@ public class TTenant implements TenantDetails {
 
     @Override
     public DataSource getDataSource() {
-        if(dataSource == null) {
+        if (dataSource == null) {
             dataSource = dataSourceFromTenant(this);
         }
         return dataSource;

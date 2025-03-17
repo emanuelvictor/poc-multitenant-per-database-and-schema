@@ -8,16 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.stereotype.Service;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.*;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -25,32 +20,31 @@ public class TenantMigrationService extends AbstractRoutingDataSource {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(TenantMigrationService.class);
 
-    public static final TenantDetails CENTRAL_DATA_SOURCE = new TTenant("public", "central", "127.0.0.1", null);
-    // DATASOURCES de databases, tenants do central que se diferenciam por esqeuma não estão aqui
-    public static final HashMap<String, TenantDetails> CLIENT_DATA_SOURCES = new HashMap<>();
-
     private final TenantIdentifierResolver tenantIdentifierResolver;
 
     public TenantMigrationService(TenantIdentifierResolver tenantIdentifierResolver) {
         this.tenantIdentifierResolver = tenantIdentifierResolver;
 
-        configureRoutingDataSource();
+        configureRoutingDataSources();
         migrateCentralTenant();
-        migrateCostumerTenants();
+        migrateAllCostumerTenants();
     }
 
-    void configureRoutingDataSource() {
+    public void configureRoutingDataSources() {
         setDefaultTargetDataSource(CENTRAL_DATA_SOURCE.getDataSource());
 
-        final List<TTenant> costumerTenants = getCostumerTenantsWithDatabaseDifferentOfCentral(); // TODO tem que puxar da memória também
+        final HashMap<Object, TenantDetails> costumerTenants = getCostumerTenantsWithDatabaseDifferentOfCentral(); // TODO talvez funcione com o getAllCostumerTenants e esse método possa ser deletado
         final HashMap<Object, Object> targetDataSources = new HashMap<>();
-        costumerTenants.forEach(tenant -> {
-            CLIENT_DATA_SOURCES.put(tenant.getSchema(), tenant);
-            targetDataSources.put(tenant.getSchema(), tenant.getDataSource());
-        });
+        costumerTenants.forEach((schema, tenantDetails) ->
+                targetDataSources.put(schema, tenantDetails.getDataSource()));
         setTargetDataSources(targetDataSources);
+
+        initialize();
     }
 
+    /**
+     * Migrate our tenant (central tenant). Database central and schema public
+     */
     private static void migrateCentralTenant() {
         try {
             final Flyway flyway = new FluentConfiguration().dataSource(CENTRAL_DATA_SOURCE.getDataSource())
@@ -62,13 +56,16 @@ public class TenantMigrationService extends AbstractRoutingDataSource {
         }
     }
 
-    public void migrateCostumerTenants() {
-        getAllCostumerTenants().forEach(this::migrate);
+    /**
+     * Migrate all costumer tenants. With dedicated databases or not.
+     */
+    public void migrateAllCostumerTenants() {
+        getAllCostumerTenants().forEach((_schema, tenantDetails) -> migrate(tenantDetails));
     }
 
     public void migrate(TenantDetails tenant) {
         try {
-            tryToCreateNewDatabase(tenant.getDatabase());
+            tryToCreateNewDatabase(tenant.getDatabase()); // TODO esse try não vai rolar, tem que fazer um if exists database
             final Flyway flyway = new FluentConfiguration().dataSource(tenant.getDataSource())
                     .schemas(tenant.getSchema()).baselineOnMigrate(true).locations("db/migration").load();
             flyway.migrate();
@@ -78,45 +75,7 @@ public class TenantMigrationService extends AbstractRoutingDataSource {
         }
     }
 
-    public static List<TTenant> getAllCostumerTenants() {
-        final List<TTenant> costumerTenants = new ArrayList<>();
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            connection = CENTRAL_DATA_SOURCE.getDataSource().getConnection();
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery("SELECT * FROM public.tenant");
-            while (resultSet.next()) {
-                final TTenant tenant = getTenantFromResultSet(resultSet);
-                costumerTenants.add(tenant);
-            }
-            resultSet.close();
-            connection.close();
-            statement.close();
-        } catch (Exception e) {
-            LOGGER.error("Error to get all tenants", e);
-            try {
-                if (resultSet != null && !resultSet.isClosed()) {
-                    resultSet.close();
-                }
-                if (connection != null && !connection.isClosed()) {
-                    connection.close();
-                }
-                if (statement != null && !statement.isClosed()) {
-                    statement.close();
-                }
-            } catch (Exception e1) {
-                LOGGER.error("Error to close connection", e1);
-            }
-        }
-        return costumerTenants;
-    }
-
-    public static List<TTenant> getCostumerTenantsWithDatabaseDifferentOfCentral() {
-        return getAllCostumerTenants().stream().filter(tenant -> !tenant.getDatabase().equals(CENTRAL_DATA_SOURCE.getDatabase())).collect(Collectors.toList());
-    }
-
+    // TODO verificar possibilidade de ir para o TenantService
     private static void tryToCreateNewDatabase(String database) {
         try {
             final Connection connection = CENTRAL_DATA_SOURCE.getDataSource().getConnection();
@@ -139,31 +98,11 @@ public class TenantMigrationService extends AbstractRoutingDataSource {
         }
     }
 
-    private static TTenant getTenantFromResultSet(ResultSet resultSet) {
-        try {
-            final TenantDetails tenant = CLIENT_DATA_SOURCES.get(resultSet.getString("schema"));
-            final DataSource dataSource;
-            dataSource = Objects.requireNonNullElse(tenant, CENTRAL_DATA_SOURCE).getDataSource();
-            return new TTenant(resultSet.getString("schema"), resultSet.getString("database"), resultSet.getString("address"), dataSource);
-        } catch (Exception e) {
-            LOGGER.info("Error to convert ResultSet to Tenant", e);
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     protected String determineCurrentLookupKey() {
-        return ofNullable(CLIENT_DATA_SOURCES.get(tenantIdentifierResolver.resolveCurrentTenantIdentifier())).orElse(CENTRAL_DATA_SOURCE).getDatabase();
-    }
-
-    public void add(TenantDetails tenantDetails) {
-        CLIENT_DATA_SOURCES.put(tenantDetails.getSchema(), tenantDetails);
-        final HashMap<Object, Object> targetDataSources = new HashMap<>();
-        CLIENT_DATA_SOURCES.forEach((schema, tenant) -> {
-            targetDataSources.put(schema, tenant.getDataSource());
-        });
-        setTargetDataSources(targetDataSources);
-
-        this.initialize();
+        final TenantDetails tenantDetails =
+                ofNullable(CLIENT_DATA_SOURCES.get(tenantIdentifierResolver.resolveCurrentTenantIdentifier()))
+                        .orElse(CENTRAL_DATA_SOURCE);
+        return tenantDetails.getDatabase();
     }
 }

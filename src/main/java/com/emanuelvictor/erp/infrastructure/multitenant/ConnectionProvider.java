@@ -1,5 +1,6 @@
 package com.emanuelvictor.erp.infrastructure.multitenant;
 
+import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantDetails;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
@@ -9,9 +10,11 @@ import org.springframework.stereotype.Component;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Optional;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.CENTRAL_DATA_SOURCE;
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.getAllCostumerTenants;
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.CENTRAL_DATA_SOURCE;
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.getAllCostumerTenants;
+
 
 @Component
 @RequiredArgsConstructor
@@ -37,10 +40,9 @@ public class ConnectionProvider implements MultiTenantConnectionProvider<String>
             return connection;
         }
 
-        final Connection connection = getAllCostumerTenants().stream() // TODO tem que puxar da memória
-                .filter(tenant -> tenant.getSchema().equals(schema.toLowerCase()))
-                .findFirst().orElseThrow(() -> new RuntimeException("Tenant not found. Verify if it is added in RouteDataSource of TenantMigrationService"))
-                .getDataSource().getConnection();
+        final TenantDetails tenantDetails = Optional.ofNullable(getAllCostumerTenants().get(schema))
+                .orElseThrow(() -> new RuntimeException("Tenant not found. Verify if it is added in RouteDataSource of TenantMigrationService"));
+        final Connection connection = tenantDetails.getDataSource().getConnection();
         connection.setSchema(schema);
         return connection;
     }

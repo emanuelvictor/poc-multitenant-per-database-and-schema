@@ -1,12 +1,13 @@
 package com.emanuelvictor.erp.application.filters;
 
 import com.emanuelvictor.erp.infrastructure.multitenant.TenantIdentifierResolver;
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
+
+import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.CENTRAL_DATA_SOURCE;
 
 
 @RequiredArgsConstructor
@@ -30,7 +31,7 @@ public class TenantFilter implements Filter {
         if (schema != null) {
             tenantIdentifierResolver.setTenant(schema);
         } else
-            tenantIdentifierResolver.setTenant(TenantMigrationService.CENTRAL_DATA_SOURCE.getSchema());
+            tenantIdentifierResolver.setTenant(CENTRAL_DATA_SOURCE.getSchema());
         chain.doFilter(request, response);
     }
 }
