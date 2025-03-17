@@ -42,7 +42,7 @@ public class TenantMigrationService extends AbstractRoutingDataSource {
     void configureRoutingDataSource() {
         setDefaultTargetDataSource(CENTRAL_DATA_SOURCE.getDataSource());
 
-        final List<TTenant> costumerTenants = getCostumerTenantsWithDatabaseDifferentOfCentral();
+        final List<TTenant> costumerTenants = getCostumerTenantsWithDatabaseDifferentOfCentral(); // TODO tem que puxar da memória também
         final HashMap<Object, Object> targetDataSources = new HashMap<>();
         costumerTenants.forEach(tenant -> {
             CLIENT_DATA_SOURCES.put(tenant.getSchema(), tenant);
@@ -154,5 +154,16 @@ public class TenantMigrationService extends AbstractRoutingDataSource {
     @Override
     protected String determineCurrentLookupKey() {
         return ofNullable(CLIENT_DATA_SOURCES.get(tenantIdentifierResolver.resolveCurrentTenantIdentifier())).orElse(CENTRAL_DATA_SOURCE).getDatabase();
+    }
+
+    public void add(TenantDetails tenantDetails) {
+        CLIENT_DATA_SOURCES.put(tenantDetails.getSchema(), tenantDetails);
+        final HashMap<Object, Object> targetDataSources = new HashMap<>();
+        CLIENT_DATA_SOURCES.forEach((schema, tenant) -> {
+            targetDataSources.put(schema, tenant.getDataSource());
+        });
+        setTargetDataSources(targetDataSources);
+
+        this.initialize();
     }
 }

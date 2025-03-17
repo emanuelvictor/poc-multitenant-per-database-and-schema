@@ -31,10 +31,13 @@ public class ConnectionProvider implements MultiTenantConnectionProvider<String>
 
     @Override
     public Connection getConnection(String schema) throws SQLException {
-        if (CENTRAL_DATA_SOURCE.getSchema().equals(schema))
-            return CENTRAL_DATA_SOURCE.getDataSource().getConnection();
+        if (CENTRAL_DATA_SOURCE.getSchema().equals(schema)) {
+            final Connection connection = CENTRAL_DATA_SOURCE.getDataSource().getConnection();
+            connection.setSchema(schema);
+            return connection;
+        }
 
-        final Connection connection = getAllCostumerTenants().stream()
+        final Connection connection = getAllCostumerTenants().stream() // TODO tem que puxar da memória
                 .filter(tenant -> tenant.getSchema().equals(schema.toLowerCase()))
                 .findFirst().orElseThrow(() -> new RuntimeException("Tenant not found. Verify if it is added in RouteDataSource of TenantMigrationService"))
                 .getDataSource().getConnection();

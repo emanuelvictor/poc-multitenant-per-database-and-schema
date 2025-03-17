@@ -14,7 +14,7 @@ public class GetAllTenantsRest {
     private final TTenantRepository tTenantRepository;
 
     @GetMapping("tenants")
-    public List<TenantDTO> getAllTenants() { // TODO testint
+    public List<TenantDTO> getAllTenants() { // TODO test it
         return tTenantRepository.findAll().stream()
                 .map(tTenant -> new TenantDTO(tTenant.getSchema(), tTenant.getDatabase(),
                         tTenant.getAddress())).toList();

@@ -1,42 +1,40 @@
 //package com.emanuelvictor.erp.infrastructure.multitenant;
 //
 //import com.emanuelvictor.erp.infrastructure.multitenant.domain.TTenant;
-//import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantDetails;
-//import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService;
-//import com.zaxxer.hikari.HikariDataSource;
 //import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 //import org.springframework.stereotype.Component;
 //
-//import javax.sql.DataSource;
 //import java.util.HashMap;
 //import java.util.List;
 //
-//import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.dataSourceFromTenant;
-//import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.getCentralTenant;
+//import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantMigrationService.*;
 //import static java.util.Optional.ofNullable;
 //
 //@Component
 //public class TenantRoutingDatasource extends AbstractRoutingDataSource {
 //
-//    private final TenantMigrationService tenantMigrationService;
 //    private final TenantIdentifierResolver tenantIdentifierResolver;
 //
-//    TenantRoutingDatasource(final TenantMigrationService tenantMigrationService, TenantIdentifierResolver tenantIdentifierResolver) {
-//        this.tenantMigrationService = tenantMigrationService;
+//    TenantRoutingDatasource(TenantIdentifierResolver tenantIdentifierResolver) {
 //        this.tenantIdentifierResolver = tenantIdentifierResolver;
-//        this.config(tenantMigrationService.getCostumerTenants());
+//        configureRoutingDataSource();
 //    }
 //
-//    public void config(List<TTenant> tenants) {
-//        setDefaultTargetDataSource(dataSourceFromTenant(getCentralTenant()));
 //
+//    void configureRoutingDataSource() {
+//        setDefaultTargetDataSource(CENTRAL_DATA_SOURCE.getDataSource());
+//
+//        final List<TTenant> costumerTenants = getCostumerTenantsWithDatabaseDifferentOfCentral();
 //        final HashMap<Object, Object> targetDataSources = new HashMap<>();
-//        tenants.forEach(tenant -> targetDataSources.put(tenant.getSchema(), dataSourceFromTenant(tenant)));
+//        costumerTenants.forEach(tenant -> {
+//            CLIENT_DATA_SOURCES.put(tenant.getSchema(), tenant); // TODO ver se aqui entra primeiro ou lá
+//            targetDataSources.put(tenant.getSchema(), tenant.getDataSource());
+//        });
 //        setTargetDataSources(targetDataSources);
 //    }
 //
 //    @Override
 //    protected String determineCurrentLookupKey() {
-//        return ofNullable(tenantIdentifierResolver.resolveCurrentTenantIdentifier()).orElse(getCentralTenant()).getDatabase();
+//        return ofNullable(CLIENT_DATA_SOURCES.get(tenantIdentifierResolver.resolveCurrentTenantIdentifier())).orElse(CENTRAL_DATA_SOURCE).getDatabase();
 //    }
 //}

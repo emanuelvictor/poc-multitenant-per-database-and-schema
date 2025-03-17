@@ -32,6 +32,7 @@ public class InsertNewTenantRest {
         tenant = new TTenant(tenantDTO.schema(), tenantDTO.database(), tenantDTO.address(), null);
         tTenantRepository.save(tenant);
         tenantMigrationService.migrate(tenant);
+        tenantMigrationService.add(tenant);
         return tenantDTO;
     }
 }
