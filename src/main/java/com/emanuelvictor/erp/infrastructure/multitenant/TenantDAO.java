@@ -1,4 +1,4 @@
-package com.emanuelvictor.erp.infrastructure.multitenant.domain;
+package com.emanuelvictor.erp.infrastructure.multitenant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,34 +10,30 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * Busca os tenants de forma standAlone, sem setar tenant. Ou seja, sempre pega de 127.0.0.1:central/public.
+ * Busca os tenants de forma standAlone, sem setar tenant. Ou seja, sempre pega de 127.0.0.1:central/central.
  */
-public final class TenantService {
+public final class TenantDAO {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(TenantService.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(TenantDAO.class);
 
-    public static final TenantDetails CENTRAL_DATA_SOURCE = new TTenant("public", "central", "127.0.0.1", null);
-    // DATASOURCES de databases, tenants do central que se diferenciam por esqeuma não estão aqui
-    public static final HashMap<Object, TenantDetails> CLIENT_DATA_SOURCES = new HashMap<>();
-    public static final HashMap<Object, TenantDetails> ALL_TENANTS = new HashMap<>();
+    private static final HashMap<String, TenantDetails> ALL_TENANTS = new HashMap<>();
+    public static final TenantDetails CENTRAL_TENANT = new TTenant("central", "central", "127.0.0.1", null);
 
-    public static HashMap<Object, TenantDetails> getAllCostumerTenants() {
-        if (!CLIENT_DATA_SOURCES.isEmpty()) {
-            return CLIENT_DATA_SOURCES;
-        }
+    public static HashMap<String, TenantDetails> getAllCostumerTenants() {
+        if (!ALL_TENANTS.isEmpty())
+            return ALL_TENANTS;
         final List<TenantDetails> costumerTenants = new ArrayList<>();
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
         try {
-            connection = CENTRAL_DATA_SOURCE.getDataSource().getConnection();
+            connection = CENTRAL_TENANT.getDataSource().getConnection();
             statement = connection.createStatement();
-            resultSet = statement.executeQuery("SELECT * FROM public.tenant");
+            resultSet = statement.executeQuery("SELECT * FROM central.tenant");
             while (resultSet.next()) {
-                final TenantDetails tenant = getTenantFromResultSet(resultSet);
+                final TenantDetails tenant = extractTenantFromResultSetAndCreateDatasourceIfNotExists(resultSet);
                 costumerTenants.add(tenant);
             }
             resultSet.close();
@@ -65,29 +61,18 @@ public final class TenantService {
         return ALL_TENANTS;
     }
 
-    // TODo talvez não haja necessidade
-    public static HashMap<Object, TenantDetails> getCostumerTenantsWithDatabaseDifferentOfCentral() {
-        ALL_TENANTS.forEach((tenant, tenantDetails) -> {
-            if (!tenantDetails.getDatabase().equals(CENTRAL_DATA_SOURCE.getDatabase())) {
-                CLIENT_DATA_SOURCES.put(tenant, tenantDetails);
-            }
-        });
-        return CLIENT_DATA_SOURCES;
-    }
-
     public static void addNewTenant(final TenantDetails tenantDetails) {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = CENTRAL_DATA_SOURCE.getDataSource().getConnection();
+            connection = CENTRAL_TENANT.getDataSource().getConnection();
             statement = connection.createStatement();
-            final String query = "INSERT INTO public.tenant(schema, database, address) " +
+            final String query = "INSERT INTO central.tenant(schema, database, address) " +
                     "VALUES('" + tenantDetails.getSchema() + "','" + tenantDetails.getDatabase() + "','" + tenantDetails.getAddress() + "')";
-            System.out.println(query);
             statement.executeUpdate(query);
             connection.close();
             statement.close();
-            CLIENT_DATA_SOURCES.put(tenantDetails.getSchema(), tenantDetails);
+            ALL_TENANTS.put(tenantDetails.getSchema(), tenantDetails);
         } catch (Exception e) {
             LOGGER.error("Error to add tenant {}", tenantDetails.getSchema(), e);
             try {
@@ -104,11 +89,22 @@ public final class TenantService {
         }
     }
 
-    private static TenantDetails getTenantFromResultSet(ResultSet resultSet) {
+    private static TenantDetails extractTenantFromResultSetAndCreateDatasourceIfNotExists(ResultSet resultSet) {
         try {
-            final TenantDetails tenant = CLIENT_DATA_SOURCES.get(resultSet.getString("schema"));
-            final DataSource dataSource = Objects.requireNonNullElse(tenant, CENTRAL_DATA_SOURCE).getDataSource();
-            return new TTenant(resultSet.getString("schema"), resultSet.getString("database"), resultSet.getString("address"), dataSource);
+            final String schema = resultSet.getString("schema");
+            final String database = resultSet.getString("database");
+            final String address = resultSet.getString("address");
+            final DataSource dataSource;
+
+            if (database.equals("central")) {
+                dataSource = CENTRAL_TENANT.getDataSource();
+                return new TTenant(schema, database, address, dataSource);
+            }
+
+            final TenantDetails tenantDetails = new TTenant(schema, database, address, null);
+            dataSource = tenantDetails.getDataSource();
+            ALL_TENANTS.put(tenantDetails.getSchema(), tenantDetails);
+            return new TTenant(schema, database, address, dataSource);
         } catch (Exception e) {
             LOGGER.info("Error to convert ResultSet to Tenant", e);
             throw new RuntimeException(e);

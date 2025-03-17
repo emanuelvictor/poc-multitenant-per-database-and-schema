@@ -1,4 +1,4 @@
-package com.emanuelvictor.erp.infrastructure.multitenant.domain;
+package com.emanuelvictor.erp.infrastructure.multitenant;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

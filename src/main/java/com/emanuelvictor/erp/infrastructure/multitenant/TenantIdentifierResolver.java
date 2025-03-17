@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.CENTRAL_DATA_SOURCE;
+import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.CENTRAL_TENANT;
 
 @Setter
 @Component
@@ -18,7 +18,7 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
 
     @Override
     public String resolveCurrentTenantIdentifier() {
-        return tenant == null ? CENTRAL_DATA_SOURCE.getSchema() : tenant;
+        return tenant == null ? CENTRAL_TENANT.getSchema() : tenant;
     }
 
     @Override
@@ -37,6 +37,6 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
     @Override
     public boolean isRoot(String tenant) {
         assert tenant != null;
-        return tenant.equals(CENTRAL_DATA_SOURCE.getSchema());
+        return tenant.equals(CENTRAL_TENANT.getSchema());
     }
 }

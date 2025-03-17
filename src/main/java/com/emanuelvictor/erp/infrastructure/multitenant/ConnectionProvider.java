@@ -1,6 +1,5 @@
 package com.emanuelvictor.erp.infrastructure.multitenant;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantDetails;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
@@ -12,19 +11,17 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.CENTRAL_DATA_SOURCE;
-import static com.emanuelvictor.erp.infrastructure.multitenant.domain.TenantService.getAllCostumerTenants;
+import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.CENTRAL_TENANT;
+import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.getAllCostumerTenants;
 
 
 @Component
 @RequiredArgsConstructor
 public class ConnectionProvider implements MultiTenantConnectionProvider<String>, HibernatePropertiesCustomizer {
 
-//    private final DataSource dataSource;
-
     @Override
-    public Connection getAnyConnection() throws SQLException { // TODO sei lá
-        return CENTRAL_DATA_SOURCE.getDataSource().getConnection();
+    public Connection getAnyConnection() throws SQLException {
+        return CENTRAL_TENANT.getDataSource().getConnection();
     }
 
     @Override
@@ -34,8 +31,8 @@ public class ConnectionProvider implements MultiTenantConnectionProvider<String>
 
     @Override
     public Connection getConnection(String schema) throws SQLException {
-        if (CENTRAL_DATA_SOURCE.getSchema().equals(schema)) {
-            final Connection connection = CENTRAL_DATA_SOURCE.getDataSource().getConnection();
+        if (CENTRAL_TENANT.getSchema().equals(schema)) {
+            final Connection connection = CENTRAL_TENANT.getDataSource().getConnection();
             connection.setSchema(schema);
             return connection;
         }
@@ -49,7 +46,6 @@ public class ConnectionProvider implements MultiTenantConnectionProvider<String>
 
     @Override
     public void releaseConnection(String schema, Connection connection) throws SQLException {
-//        connection.setSchema("public"); // TODO ??
         connection.setSchema(schema);
         connection.close();
     }

@@ -1,6 +1,6 @@
 package com.emanuelvictor.erp.application.services.tenants.getalltenants;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.domain.TTenantRepository;
+import com.emanuelvictor.erp.infrastructure.multitenant.TTenantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
