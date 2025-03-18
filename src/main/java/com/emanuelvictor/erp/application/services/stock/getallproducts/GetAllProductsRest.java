@@ -9,7 +9,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-public class GetAllProducts {
+public class GetAllProductsRest {
     private final TProductRepository tProductRepository;
 
     @GetMapping("products")

@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import static com.emanuelvictor.erp.infrastructure.migration.MigrationService.migrate;
 import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.CENTRAL_TENANT;
 
-
 @RestController
 @RequiredArgsConstructor
 public class InsertNewTenantRest {
@@ -29,7 +28,7 @@ public class InsertNewTenantRest {
         return insertNewTenantWithNewDatabase(tenantDTO);
     }
 
-    // TODO colocar em um service application
+    // TODO colocar em um application service
     private TenantDTO insertNewTenantToCentralDatabase(TenantDTO tenantDTO) {
         Tenant tenant = Tenant.create(tenantDTO.schema(), tenantDTO.database(), tenantDTO.address());
         final TenantDetails tenantDetails = new TTenant(tenant.getSchema(), tenant.getDatabase(), tenant.getAddress(), CENTRAL_TENANT.getDataSource());
@@ -39,7 +38,7 @@ public class InsertNewTenantRest {
         return tenantDTO;
     }
 
-    // TODO colocar em um service application
+    // TODO colocar em um application service
     private TenantDTO insertNewTenantWithNewDatabase(TenantDTO tenantDTO) {
         Tenant tenant = Tenant.create(tenantDTO.schema(), tenantDTO.database(), tenantDTO.address());
         final TenantDetails tenantDetails = new TTenant(tenant.getSchema(), tenant.getDatabase(), tenant.getAddress(), null);

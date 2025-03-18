@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class InsertNewProduct {
+public class InsertNewProductRest {
 
     private final TProductRepository tProductRepository;
 
