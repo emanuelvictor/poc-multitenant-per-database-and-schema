@@ -18,7 +18,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.lang.reflect.Method;
 import java.util.Collections;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.CENTRAL_TENANT;
+import static com.emanuelvictor.erp.application.adapters.secundaries.tenant.TenantDAO.CENTRAL_TENANT;
 
 @SpringBootTest
 @AutoConfigureMockMvc

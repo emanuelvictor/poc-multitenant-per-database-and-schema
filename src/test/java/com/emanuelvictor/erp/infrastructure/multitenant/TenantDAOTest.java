@@ -1,11 +1,14 @@
 package com.emanuelvictor.erp.infrastructure.multitenant;
 
 import com.emanuelvictor.erp.AbstractIntegrationTests;
+import com.emanuelvictor.erp.application.adapters.secundaries.tenant.TTenant;
+import com.emanuelvictor.erp.application.adapters.secundaries.tenant.TenantDAO;
+import com.emanuelvictor.erp.application.adapters.secundaries.tenant.TenantDetails;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.*;
+import static com.emanuelvictor.erp.application.adapters.secundaries.tenant.TenantDAO.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 

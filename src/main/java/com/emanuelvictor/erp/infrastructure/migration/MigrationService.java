@@ -1,6 +1,6 @@
 package com.emanuelvictor.erp.infrastructure.migration;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.TenantDetails;
+import com.emanuelvictor.erp.application.adapters.secundaries.tenant.TenantDetails;
 import jakarta.annotation.PostConstruct;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.*;
+import static com.emanuelvictor.erp.application.adapters.secundaries.tenant.TenantDAO.*;
 
 @Service
 public class MigrationService {

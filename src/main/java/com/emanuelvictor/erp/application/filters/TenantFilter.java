@@ -1,13 +1,13 @@
 package com.emanuelvictor.erp.application.filters;
 
-import com.emanuelvictor.erp.infrastructure.multitenant.TenantIdentifierResolver;
+import com.emanuelvictor.erp.infrastructure.multitenant.schema.TenantIdentifierResolver;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.CENTRAL_TENANT;
+import static com.emanuelvictor.erp.application.adapters.secundaries.tenant.TenantDAO.CENTRAL_TENANT;
 
 
 @RequiredArgsConstructor

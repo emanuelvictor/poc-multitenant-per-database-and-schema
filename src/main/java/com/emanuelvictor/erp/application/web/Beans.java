@@ -1,7 +1,7 @@
 package com.emanuelvictor.erp.application.web;
 
 import com.emanuelvictor.erp.application.filters.TenantFilter;
-import com.emanuelvictor.erp.infrastructure.multitenant.TenantIdentifierResolver;
+import com.emanuelvictor.erp.infrastructure.multitenant.schema.TenantIdentifierResolver;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
