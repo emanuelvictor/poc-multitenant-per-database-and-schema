@@ -8,11 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.sql.Connection;
-import java.sql.Statement;
-
-import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.CENTRAL_TENANT;
-import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.getAllCostumerTenants;
+import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.*;
 
 @Service
 public class MigrationService {
@@ -57,34 +53,6 @@ public class MigrationService {
             flyway.migrate();
         } catch (final Exception e) {
             LOGGER.error("Error while migrating tenant {}", tenant.getSchema(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Create a new database from param, if not exists.
-     *
-     * @param database String
-     */
-    private static void createNewDatabase(String database) {
-        try {
-            final Connection connection = CENTRAL_TENANT.getDataSource().getConnection();
-            final Statement statement = connection.createStatement();
-            try {
-                statement.executeUpdate("CREATE DATABASE " + database);
-                LOGGER.info("Success to create database {}", database);
-                connection.close();
-                statement.close();
-            } catch (Exception e) {
-                connection.close();
-                statement.close();
-                if (e.getMessage().toLowerCase().contains("already exists")) { // by pass when database already exists. When database has already created, use it.
-                    LOGGER.info("Database {} already exists. We cant create it", database);
-                } else
-                    throw new RuntimeException(e);
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error to open connection to create database {}", database, e);
             throw new RuntimeException(e);
         }
     }

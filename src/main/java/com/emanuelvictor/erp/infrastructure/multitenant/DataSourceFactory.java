@@ -9,11 +9,11 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.Properties;
 
-public class DataSourceFactory implements IDataSourceFactory {
+public class DataSourceFactory {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(DataSourceFactory.class);
 
-    public DataSource createDataSourceFromTenantDetails(final TenantDetails tenantDetails) {
+    public static DataSource createDataSourceFromTenantDetails(final TenantDetails tenantDetails) {
 
         final Properties configuration = loadProperties();
         final HikariDataSource dataSource = new HikariDataSource();

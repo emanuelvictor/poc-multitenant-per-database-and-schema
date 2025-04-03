@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 
-import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.*;
+import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.CENTRAL_TENANT;
+import static com.emanuelvictor.erp.infrastructure.multitenant.TenantDAO.getAllCostumerTenants;
 import static java.util.Optional.ofNullable;
 
 @Service
